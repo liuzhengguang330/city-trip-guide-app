@@ -1,27 +1,25 @@
-# 柏林攻略 App 页
+# City Trip Guide App
 
-这是一个可部署的 `PWA`（网页 App），部署后所有人都能打开，并可添加到手机桌面。
+移动端优先的一日游攻略 PWA，支持：
+- 切换城市
+- 按用户性格自动调整行程节奏
+- 地图底图切换（本地风格 / OSM / 地形）
 
-## 本地预览（推荐）
-因为直接双击 `file://` 可能被浏览器限制，建议用本地服务：
+## Privacy Notes
+- 仓库不包含本机绝对路径、令牌、私有密钥。
+- 使用 GitHub `noreply` 邮箱提交，避免暴露本机邮箱信息。
 
+## Local Preview
 ```bash
-cd "/Users/zhengguangliu/Desktop/buildings- technology/xhs-berlin-trip-site"
 python3 -m http.server 8080
 ```
+打开 [http://localhost:8080](http://localhost:8080)
 
-打开：`http://localhost:8080`
+## Stable Free URL
+可使用 GitHub Pages 免费长期托管：
+`https://liuzhengguang330.github.io/city-trip-guide-app/`
 
-## 上云发布（Vercel）
-```bash
-cd "/Users/zhengguangliu/Desktop/buildings- technology/xhs-berlin-trip-site"
-vercel --prod
-```
-
-发布后得到公网链接（任何人可打开）。
-
-## 文件
-- `index.html`：App风格攻略页
-- `manifest.webmanifest`：安装到桌面配置
-- `sw.js`：离线缓存
-- `icon-192.png` / `icon-512.png`：App图标
+## Files
+- `index.html` app 页面
+- `manifest.webmanifest` PWA 配置
+- `sw.js` service worker
