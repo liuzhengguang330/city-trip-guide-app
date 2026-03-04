@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>城市一日游 · App攻略版</title>
+  <meta name="description" content="可切换城市与用户性格的旅行攻略 App 页面。" />
+  <meta name="theme-color" content="#0f766e" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <style>
+    :root { --bg:#f3f7f7;--card:#fff;--ink:#1f2d33;--muted:#62757a;--line:#d7e2e3;--a:#0f766e;--b:#d97706;--c:#15803d;--d:#5b21b6; }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif}
+    .app{max-width:460px;margin:0 auto;min-height:100vh;padding:14px 12px 92px;background:linear-gradient(180deg,#e9f8f6 0,#f3f7f7 220px,#f3f7f7 100%)}
+    .hero,.card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 18px rgba(7,26,31,.06)}
+    .hero{padding:14px 12px}
+    .card{padding:12px;margin-top:12px}
+    h1{margin:0;font-size:18px;line-height:1.3}
+    .sub{margin:6px 0 0;font-size:12px;color:var(--muted)}
+    .control-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+    select,.btn{border:1px solid #cdd9db;background:#fff;padding:8px 10px;border-radius:10px;font-size:12px;color:#12343b;cursor:pointer}
+    .chips{display:flex;gap:8px;overflow:auto;padding:12px 2px 2px}
+    .chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;font-size:12px;white-space:nowrap;cursor:pointer}
+    .chip.active{color:#fff;border-color:transparent}
+    .title h2{margin:0;font-size:16px}
+    .meta{font-size:12px;color:var(--muted);margin-top:4px}
+    .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+    .kpi{background:#f7fbfb;border:1px solid #e4efef;border-radius:12px;padding:8px}
+    .kpi .k{font-size:11px;color:var(--muted)}
+    .kpi .v{font-size:13px;font-weight:700;margin-top:3px}
+    .timeline{margin-top:10px}
+    .step{display:grid;grid-template-columns:64px 1fr;gap:8px;padding:8px 0;border-top:1px dashed #e2ecec}
+    .step:first-child{border-top:none}
+    .t{font-size:12px;color:#4a666c;font-weight:600}
+    .d{font-size:13px;line-height:1.45}
+    .food{margin-top:8px;font-size:13px;line-height:1.45}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .btn.primary{color:#fff;border:none}
+    .map-hint{margin:4px 0 8px;font-size:11px;color:var(--muted)}
+    .map-switch{display:flex;gap:6px;overflow:auto;padding-bottom:8px}
+    .map-chip{border:1px solid #cdd9db;background:#fff;border-radius:999px;padding:6px 10px;font-size:11px;white-space:nowrap;cursor:pointer}
+    .map-chip.active{background:#13363b;color:#fff;border-color:#13363b}
+    #routeMap{height:280px;border:1px solid #deebec;border-radius:12px;overflow:hidden}
+    .tabbar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;justify-content:center;padding:8px max(12px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));z-index:10}
+    .tabinner{width:min(460px,100%);display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .tab{background:#fff;border:1px solid var(--line);border-radius:10px;padding:7px 6px;font-size:11px;text-align:center;color:#2f454b}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <h1>城市一日游 · 攻略 App 版</h1>
+      <p class="sub">支持切换城市、按用户性格自动调节耗时预算，并可复制城市模板快速发新内容。</p>
+      <div class="control-row">
+        <label for="citySelect">城市:</label>
+        <select id="citySelect"></select>
+        <label for="personaSelect">用户性格:</label>
+        <select id="personaSelect"></select>
+        <button class="btn" onclick="copyCityTemplate()">复制城市模板</button>
+      </div>
+    </section>
+
+    <section class="chips" id="chips"></section>
+    <section class="card" id="guideCard"></section>
+
+    <section class="card">
+      <p class="map-hint">底图切换：德国本地 / OSM标准 / 地形图</p>
+      <div class="map-switch" id="mapSwitch"></div>
+      <div id="routeMap"></div>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <div class="tabinner">
+      <button class="tab" onclick="scrollToTop()">路线</button>
+      <button class="tab" onclick="openVBB()">交通</button>
+      <button class="tab" onclick="copyLink()">分享</button>
+      <button class="tab" onclick="installApp()">装到桌面</button>
+    </div>
+  </nav>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    const personas = {
+      standard: { name: '标准型', time: 1, budget: 1, food: '平衡安排' },
+      speed: { name: '特种兵', time: 0.85, budget: 0.9, food: '快餐优先' },
+      relax: { name: '慢游型', time: 1.2, budget: 1.15, food: '休闲咖啡馆' },
+      foodie: { name: '吃货型', time: 1.1, budget: 1.35, food: '餐饮优先' }
+    };
+
+    const cities = {
+      berlin: {
+        name: '柏林 Berlin',
+        center: [52.52, 13.405],
+        routes: {
+          a:{name:'A 波茨坦王室线',color:'var(--a)',time:[7,8],budget:[30,55],food:'有，较多',desc:'Berlin Hbf → Sanssouci → Pfaueninsel → Wannsee → Berlin',foodText:'Sanssouci 和 Wannsee 餐饮较多。',nav:'https://www.google.com/maps/dir/?api=1&origin=Berlin+Hauptbahnhof&destination=Pfaueninsel+Ferry+Berlin&waypoints=Sanssouci+Palace+Potsdam|Wannsee+Berlin&travelmode=transit',steps:[['08:30','Berlin Hbf 出发'],['09:30','Sanssouci 参观'],['12:00','园区附近午餐'],['14:00','Pfaueninsel'],['17:00','Wannsee 晚餐返程']],coords:[[52.5251,13.3694],[52.4044,13.0386],[52.4341,13.1206],[52.4212,13.1785],[52.5251,13.3694]]},
+          b:{name:'B 奥拉宁堡纪念线',color:'var(--b)',time:[6,7],budget:[18,35],food:'有，适中',desc:'Berlin Hbf → Sachsenhausen → Oranienburg → Berlin',foodText:'Oranienburg 市区吃饭更方便。',nav:'https://www.google.com/maps/dir/?api=1&origin=Berlin+Hauptbahnhof&destination=Sachsenhausen+Memorial+and+Museum&travelmode=transit',steps:[['09:00','Berlin Hbf 出发'],['10:00','纪念馆参观'],['13:00','Oranienburg 午餐'],['15:30','市区散步'],['17:00','返程 Berlin']],coords:[[52.5251,13.3694],[52.7611,13.2591],[52.7543,13.2369],[52.5251,13.3694]]}
+        }
+      },
+      paris: {
+        name: '巴黎 Paris',
+        center: [48.8566, 2.3522],
+        routes: {
+          a:{name:'A 左岸经典线',color:'var(--a)',time:[6,7],budget:[35,70],food:'有，较多',desc:'Louvre → Seine → Notre-Dame → Latin Quarter',foodText:'拉丁区餐馆密集。',nav:'https://www.google.com/maps/dir/?api=1&origin=Louvre+Museum&destination=Latin+Quarter+Paris&waypoints=Notre-Dame+Cathedral+Paris&travelmode=transit',steps:[['09:00','卢浮宫周边出发'],['11:00','塞纳河沿岸步行'],['13:00','午餐'],['15:00','巴黎圣母院周边'],['17:30','拉丁区晚餐']],coords:[[48.8606,2.3376],[48.8584,2.2945],[48.8530,2.3499],[48.8493,2.3430]]},
+          b:{name:'B 蒙马特文艺线',color:'var(--b)',time:[5,6],budget:[28,55],food:'有，适中',desc:'Sacré-Cœur → Montmartre → Opéra',foodText:'蒙马特咖啡馆多。',nav:'https://www.google.com/maps/dir/?api=1&origin=Sacre-Coeur+Paris&destination=Opera+Garnier+Paris&travelmode=transit',steps:[['09:30','圣心堂'],['11:00','蒙马特街区'],['13:00','午餐'],['15:00','歌剧院区域'],['17:00','返程']],coords:[[48.8867,2.3431],[48.8860,2.3400],[48.8708,2.3321]]}
+        }
+      },
+      tokyo: {
+        name: '东京 Tokyo',
+        center: [35.6762, 139.6503],
+        routes: {
+          a:{name:'A 浅草上野线',color:'var(--a)',time:[6,7],budget:[25,55],food:'有，较多',desc:'Asakusa → Ueno Park → Ameyoko',foodText:'阿美横丁小吃丰富。',nav:'https://www.google.com/maps/dir/?api=1&origin=Senso-ji+Temple&destination=Ameyoko+Tokyo&waypoints=Ueno+Park&travelmode=transit',steps:[['09:00','浅草寺'],['11:00','上野公园'],['13:00','午餐'],['15:00','阿美横丁'],['17:30','返程']],coords:[[35.7148,139.7967],[35.7156,139.7745],[35.7090,139.7745]]},
+          b:{name:'B 涩谷新宿线',color:'var(--d)',time:[7,8],budget:[35,80],food:'有，非常多',desc:'Shibuya → Harajuku → Shinjuku',foodText:'涩谷与新宿餐饮选择非常多。',nav:'https://www.google.com/maps/dir/?api=1&origin=Shibuya+Station&destination=Shinjuku+Station&waypoints=Harajuku+Station&travelmode=transit',steps:[['10:00','涩谷十字路口'],['12:00','原宿周边'],['14:00','午餐'],['16:00','新宿打卡'],['19:00','晚餐返程']],coords:[[35.6580,139.7016],[35.6702,139.7027],[35.6900,139.7005]]}
+        }
+      }
+    };
+
+    const mapProviders = {
+      de:{name:'德国本地',url:'https://tile.openstreetmap.de/{z}/{x}/{y}.png',attribution:'&copy; OpenStreetMap contributors'},
+      osm:{name:'OSM标准',url:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',attribution:'&copy; OpenStreetMap contributors'},
+      topo:{name:'地形图',url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',attribution:'Map data: &copy; OpenStreetMap contributors, SRTM | Style: &copy; OpenTopoMap'}
+    };
+
+    const citySelect = document.getElementById('citySelect');
+    const personaSelect = document.getElementById('personaSelect');
+    const chips = document.getElementById('chips');
+    const guideCard = document.getElementById('guideCard');
+    const mapSwitch = document.getElementById('mapSwitch');
+
+    let activeCity = 'berlin';
+    let activePersona = 'standard';
+    let activeRoute = 'a';
+    let activeMap = 'de';
+    let deferredPrompt = null;
+
+    const map = L.map('routeMap', { zoomControl: true }).setView(cities[activeCity].center, 8);
+    let tileLayer = null;
+    let routeLayer = null;
+    let pointLayer = null;
+
+    function formatRange([min, max], factor, unit = '') {
+      return `${Math.round(min * factor)}-${Math.round(max * factor)}${unit}`;
+    }
+
+    function currentRoute() {
+      return cities[activeCity].routes[activeRoute];
+    }
+
+    function setMapProvider(key) {
+      activeMap = key;
+      if (tileLayer) map.removeLayer(tileLayer);
+      const p = mapProviders[key];
+      tileLayer = L.tileLayer(p.url, { maxZoom: 19, attribution: p.attribution }).addTo(map);
+      renderMapSwitch();
+    }
+
+    function renderMapSwitch() {
+      mapSwitch.innerHTML = '';
+      Object.entries(mapProviders).forEach(([k, p]) => {
+        const b = document.createElement('button');
+        b.className = 'map-chip' + (k === activeMap ? ' active' : '');
+        b.textContent = p.name;
+        b.onclick = () => setMapProvider(k);
+        mapSwitch.appendChild(b);
+      });
+    }
+
+    function updateRouteMap() {
+      const r = currentRoute();
+      if (routeLayer) map.removeLayer(routeLayer);
+      if (pointLayer) map.removeLayer(pointLayer);
+
+      routeLayer = L.polyline(r.coords, { color: r.color, weight: 5, opacity: 0.9, lineCap: 'round' }).addTo(map);
+      pointLayer = L.layerGroup(r.coords.map((c, i) =>
+        L.circleMarker(c, { radius: 5, color: '#0f4d52', fillColor: '#12a4b0', fillOpacity: 0.9, weight: 1.2 })
+          .bindTooltip(i === 0 ? '起点/终点' : `站点 ${i}`, { direction: 'top' })
+      )).addTo(map);
+
+      map.fitBounds(routeLayer.getBounds(), { padding: [20, 20] });
+    }
+
+    function renderCityAndPersona() {
+      citySelect.innerHTML = Object.entries(cities).map(([k, c]) => `<option value="${k}">${c.name}</option>`).join('');
+      citySelect.value = activeCity;
+      personaSelect.innerHTML = Object.entries(personas).map(([k, p]) => `<option value="${k}">${p.name}</option>`).join('');
+      personaSelect.value = activePersona;
+    }
+
+    function renderRouteChips() {
+      chips.innerHTML = '';
+      Object.entries(cities[activeCity].routes).forEach(([k, r]) => {
+        const b = document.createElement('button');
+        b.className = 'chip' + (k === activeRoute ? ' active' : '');
+        b.textContent = r.name;
+        if (k === activeRoute) b.style.background = r.color;
+        b.onclick = () => { activeRoute = k; render(); };
+        chips.appendChild(b);
+      });
+    }
+
+    function renderCard() {
+      const r = currentRoute();
+      const p = personas[activePersona];
+      const adjustedTime = formatRange(r.time, p.time, 'h');
+      const adjustedBudget = `€${formatRange(r.budget, p.budget)}/人`;
+
+      guideCard.innerHTML = `
+        <div class="title"><h2>${r.name}</h2></div>
+        <div class="meta">${r.desc}</div>
+        <div class="meta">用户性格：${p.name}（节奏：${p.food}）</div>
+        <div class="kpis">
+          <div class="kpi"><div class="k">总耗时</div><div class="v">${adjustedTime}</div></div>
+          <div class="kpi"><div class="k">预算</div><div class="v">${adjustedBudget}</div></div>
+          <div class="kpi"><div class="k">吃饭</div><div class="v">${r.food}</div></div>
+        </div>
+        <div class="timeline">${r.steps.map(s => `<div class="step"><div class="t">${s[0]}</div><div class="d">${s[1]}</div></div>`).join('')}</div>
+        <div class="food"><strong>餐饮建议:</strong> ${r.foodText}</div>
+        <div class="actions">
+          <a class="btn primary" style="background:${r.color}" target="_blank" rel="noopener" href="${r.nav}">打开导航</a>
+          <button class="btn" onclick="copyNote()">复制发布文案</button>
+        </div>
+      `;
+    }
+
+    function render() {
+      map.setView(cities[activeCity].center, 8);
+      renderRouteChips();
+      renderCard();
+      updateRouteMap();
+    }
+
+    citySelect.addEventListener('change', (e) => {
+      activeCity = e.target.value;
+      activeRoute = Object.keys(cities[activeCity].routes)[0];
+      render();
+    });
+
+    personaSelect.addEventListener('change', (e) => {
+      activePersona = e.target.value;
+      renderCard();
+    });
+
+    function copyNote() {
+      const r = currentRoute();
+      const p = personas[activePersona];
+      const text = `${cities[activeCity].name}一日游推荐｜${r.name}\n用户类型:${p.name}\n时间:${formatRange(r.time, p.time, 'h')} 预算:€${formatRange(r.budget, p.budget)}/人\n路线:${r.desc}`;
+      navigator.clipboard?.writeText(text);
+      alert('已复制文案');
+    }
+
+    function copyCityTemplate() {
+      const sample = {
+        city_key: 'new_city',
+        city_name: '新城市 New City',
+        center: [0, 0],
+        routes: {
+          a: {
+            name: 'A 城市经典线',
+            color: 'var(--a)',
+            time: [6, 8],
+            budget: [30, 60],
+            food: '有，适中',
+            desc: 'Start -> Spot1 -> Spot2 -> End',
+            foodText: '补充餐饮建议',
+            nav: 'https://www.google.com/maps/dir/?api=1&origin=...&destination=...&travelmode=transit',
+            steps: [['09:00', '出发'], ['12:00', '午餐']],
+            coords: [[0, 0], [0.01, 0.01]]
+          }
+        }
+      };
+      navigator.clipboard?.writeText(JSON.stringify(sample, null, 2));
+      alert('已复制城市模板 JSON');
+    }
+
+    function copyLink() { navigator.clipboard?.writeText(location.href); alert('链接已复制'); }
+    function openVBB() { window.open('https://www.vbb.de/', '_blank'); }
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+    window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt = e; });
+    async function installApp(){ if(!deferredPrompt){ alert('请先部署到 https 再安装'); return; } deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; }
+
+    renderCityAndPersona();
+    setMapProvider('de');
+    render();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+    }
+  </script>
+</body>
+</html>
