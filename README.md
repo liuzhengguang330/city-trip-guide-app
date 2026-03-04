@@ -3,8 +3,8 @@
 Mobile-first one-day trip guide PWA with city switching and persona-based itinerary planning.
 
 ## Live Demo
-- Stable free URL (CDN): [Open App](https://cdn.jsdelivr.net/gh/liuzhengguang330/city-trip-guide-app@main/index.html)
-- GitHub repo: [city-trip-guide-app](https://github.com/liuzhengguang330/city-trip-guide-app)
+- Stable free URL (CDN): [Open App](https://cdn.jsdelivr.net/gh/REAILab-works/city-trip-guide-app@main/index.html)
+- GitHub repo: [city-trip-guide-app](https://github.com/REAILab-works/city-trip-guide-app)
 
 ## Why It Gets Attention
 - City switch: Berlin / Paris / Tokyo
