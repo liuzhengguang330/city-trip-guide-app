@@ -1,25 +1,29 @@
 # City Trip Guide App
 
-移动端优先的一日游攻略 PWA，支持：
-- 切换城市
-- 按用户性格自动调整行程节奏
-- 地图底图切换（本地风格 / OSM / 地形）
+Mobile-first one-day trip guide PWA with city switching and persona-based itinerary planning.
 
-## Privacy Notes
-- 仓库不包含本机绝对路径、令牌、私有密钥。
-- 使用 GitHub `noreply` 邮箱提交，避免暴露本机邮箱信息。
+## Live Demo
+- Stable free URL (CDN): [Open App](https://cdn.jsdelivr.net/gh/liuzhengguang330/city-trip-guide-app@main/index.html)
+- GitHub repo: [city-trip-guide-app](https://github.com/liuzhengguang330/city-trip-guide-app)
+
+## Why It Gets Attention
+- City switch: Berlin / Paris / Tokyo
+- Persona planning: standard / speed / relax / foodie
+- Interactive map styles: local / OSM / topo
+- One-click copy for social post text
+- PWA install support
+
+## Privacy Hardening
+- No local absolute path, token, private key in tracked files.
+- Commit identity sanitized to GitHub `noreply` email.
 
 ## Local Preview
 ```bash
 python3 -m http.server 8080
 ```
-打开 [http://localhost:8080](http://localhost:8080)
+Then open `http://localhost:8080`
 
-## Stable Free URL
-可使用 GitHub Pages 免费长期托管：
-`https://liuzhengguang330.github.io/city-trip-guide-app/`
-
-## Files
-- `index.html` app 页面
-- `manifest.webmanifest` PWA 配置
-- `sw.js` service worker
+## Project Files
+- `index.html`: app page
+- `manifest.webmanifest`: PWA manifest
+- `sw.js`: service worker
